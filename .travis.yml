@@ -1,0 +1,28 @@
+os:
+  - linux
+  - osx
+
+language: c
+
+env:
+  - BRANCH=0.19.6
+  - BRANCH=0.20.0
+  - BRANCH=devel
+
+cache:
+  directories:
+    - "$HOME/.choosenim/toolchains/nim-0.19.6"
+    - "$HOME/.choosenim/toolchains/nim-0.20.0"
+
+install:
+  - set -e
+  - export CHOOSENIM_CHOOSE_VERSION=$BRANCH
+  - |
+      curl https://nim-lang.org/choosenim/init.sh -sSf > init.sh
+      sh init.sh -y
+  - export PATH=$HOME/.nimble/bin:$PATH
+
+script:
+  - set -e
+  - nimble --verbose install -y
+  - nimble --verbose test
