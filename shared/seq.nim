@@ -1,16 +1,20 @@
 import locks
 
 import shared/private/common
+import shared/string
 
-export SharedSeq
+type
+  SharedSeq*[T] = object
+    ssptr*: ptr SharedObj
+    typ*: T
 
 # Seq specific
 
 proc newSharedSeq*[T](): SharedSeq[T] =
   withLock aLock:
-    result.newShared()
+    result.ssptr = newShared()
 
-proc freeSharedSeqData(ss: var SharedSeq) =
+proc freeSharedSeqData[T](ss: var SharedSeq[T]) =
   if (not ss.ssptr.isNil) and (not ss.ssptr.sptr.isNil) and
       (ss.ssptr.len != 0):
     var
@@ -20,12 +24,12 @@ proc freeSharedSeqData(ss: var SharedSeq) =
       decSeqDataCount()
       sss[i].deallocShared()
 
-proc setSharedSeqData[T](ss: var SharedSeq, s: seq[T]) =
+proc setSharedSeqData[T](ss: var SharedSeq[T], s: seq[T]) =
   ss.freeSharedSeqData()
-  ss.initShared()
+  ss.ssptr = initShared(ss.ssptr)
 
   if s.len != 0:
-    ss.initSharedData(s.len, sizeof(pointer))
+    ss.ssptr.initSharedData(s.len, sizeof(pointer))
 
     var
       sss = cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
@@ -38,23 +42,25 @@ proc setSharedSeqData[T](ss: var SharedSeq, s: seq[T]) =
 
 proc newSharedSeq*[T](s: seq[T]): SharedSeq[T] =
   withLock aLock:
-    result.newShared()
+    result.ssptr = newShared()
     result.setSharedSeqData(s)
 
-proc `=destroy`[T](ss: var SharedSeq[T]) =
+proc `=destroy`*[T](ss: var SharedSeq[T]) =
   withLock aLock:
     ss.freeSharedSeqData()
-    ss.freeShared()
+    ss.ssptr.freeShared()
+    ss.ssptr = nil
 
 proc clear*[T](ss: var SharedSeq[T]) =
   withLock aLock:
     ss.freeSharedSeqData()
-    ss.freeSharedData()
+    ss.ssptr.freeSharedData()
 
 proc free*[T](ss: var SharedSeq[T]) =
   withLock aLock:
     ss.freeSharedSeqData()
-    ss.freeShared()
+    ss.ssptr.freeShared()
+    ss.ssptr = nil
 
 proc toSeqImpl[T](ss: SharedSeq[T]): seq[T] =
   if (not ss.ssptr.isNil) and (not ss.ssptr.sptr.isNil) and

@@ -2,19 +2,21 @@ import locks
 
 import shared/private/common
 
-export SharedString, toHex
+type
+  SharedString* = object
+    ssptr*: ptr SharedObj
 
 # String specific
 
 proc newSharedString*(): SharedString =
   withLock aLock:
-    result.newShared()
+    result.ssptr = newShared()
 
 proc setSharedStringData(ss: var SharedString, s: cstring) =
-  ss.initShared()
+  ss.ssptr = initShared(ss.ssptr)
 
   if s.len != 0:
-    ss.initSharedData(s.len + 1, sizeof(char))
+    ss.ssptr.initSharedData(s.len + 1, sizeof(char))
 
     var
       ssc = cast[cstring](ss.ssptr.sptr)
@@ -23,20 +25,22 @@ proc setSharedStringData(ss: var SharedString, s: cstring) =
 
 proc newSharedString*(s: cstring): SharedString =
   withLock aLock:
-    result.newShared()
+    result.ssptr = newShared()
     result.setSharedStringData(s)
 
 proc `=destroy`(ss: var SharedString) =
   withLock aLock:
-    ss.freeShared()
+    ss.ssptr.freeShared()
+    ss.ssptr = nil
 
 proc clear*(ss: var SharedString) =
   withLock aLock:
-    ss.freeSharedData()
+    ss.ssptr.freeSharedData()
 
 proc free*(ss: var SharedString) =
   withLock aLock:
-    ss.freeShared()
+    ss.ssptr.freeShared()
+    ss.ssptr = nil
 
 proc toStringImpl(ss: SharedString): string =
   if not ss.ssptr.isNil:

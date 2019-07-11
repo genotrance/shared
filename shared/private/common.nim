@@ -6,12 +6,6 @@ type
     size*: Natural
     sptr*: pointer
 
-  SharedString* = object
-    ssptr*: ptr SharedObj
-
-  SharedSeq*[T] = object
-    ssptr*: ptr SharedObj
-
 var
   aCount = cast[ptr int](allocShared0(sizeof(int)))
   aDataCount = cast[ptr int](allocShared0(sizeof(int)))
@@ -19,9 +13,6 @@ var
   aLock*: Lock
 
 aLock.initLock()
-
-proc toHex*(ss: SharedString|SharedSeq): string =
-  result = cast[int](ss.ssptr).toHex() & " " & $getThreadId()
 
 proc checkOnExit() {.noconv.} =
   doAssert aCount[] == 0, "All shared instances not freed: " & $aCount[]
@@ -60,33 +51,34 @@ proc decSeqDataCount*() =
   aSeqDataCount[] -= 1
   doAssert aSeqDataCount[] >= 0, "aSeqDataCount is negative"
 
-proc freeSharedData*(ss: var (SharedString|SharedSeq)) =
-  if not ss.ssptr.isNil:
-    if not ss.ssptr.sptr.isNil and ss.ssptr.len != 0:
-      ss.ssptr.sptr.deallocShared()
-      ss.ssptr.len = 0
-      ss.ssptr.sptr = nil
+proc freeSharedData*(ssptr: ptr SharedObj) =
+  if not ssptr.isNil:
+    if not ssptr.sptr.isNil and ssptr.len != 0:
+      ssptr.sptr.deallocShared()
+      ssptr.len = 0
+      ssptr.sptr = nil
       decDataCount()
 
-proc freeShared*(ss: var (SharedString|SharedSeq)) =
-  if not ss.ssptr.isNil:
-    ss.freeSharedData()
-    ss.ssptr.deallocShared()
-    ss.ssptr = nil
+proc freeShared*(ssptr: ptr SharedObj) =
+  if not ssptr.isNil:
+    ssptr.freeSharedData()
+    ssptr.deallocShared()
     decCount()
 
-proc newShared*(ss: var (SharedString|SharedSeq)) =
+proc newShared*(): ptr SharedObj =
   incCount()
-  ss.ssptr = cast[ptr SharedObj](allocShared0(sizeof(SharedObj)))
+  result = cast[ptr SharedObj](allocShared0(sizeof(SharedObj)))
 
-proc initShared*(ss: var (SharedString|SharedSeq)) =
-  if ss.ssptr.isNil:
-    ss.newShared()
+proc initShared*(ssptr: ptr SharedObj): ptr SharedObj =
+  if ssptr.isNil:
+    result = newShared()
+  else:
+    result = ssptr
 
-  if not ss.ssptr.sptr.isNil and ss.ssptr.len != 0:
-    ss.freeSharedData()
+  if not result.sptr.isNil and result.len != 0:
+    result.freeSharedData()
 
-proc initSharedData*(ss: var (SharedString|SharedSeq), len, size: Natural) =
+proc initSharedData*(ssptr: ptr SharedObj, len, size: Natural) =
   incDataCount()
-  ss.ssptr.len = len
-  ss.ssptr.sptr = allocShared0(len * size)
+  ssptr.len = len
+  ssptr.sptr = allocShared0(len * size)
