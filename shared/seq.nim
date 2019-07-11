@@ -71,8 +71,10 @@ proc set*[T](ss: var SharedSeq[T], c: seq[T]) =
     ss.setSharedSeqData(c)
 
 proc set*[T](ss: var SharedSeq[T], c: SharedSeq[T]) =
+  let
+    cSeq = c.toSeq()
   withLock aLock:
-    ss.setSharedSeqData(c.toSeq())
+    ss.setSharedSeqData(cSeq)
 
 proc len*[T](ss: SharedSeq[T]): Natural =
   withLock aLock:

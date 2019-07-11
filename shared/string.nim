@@ -39,8 +39,10 @@ proc free*(ss: var SharedString) =
     ss.freeShared()
 
 proc set*(ss: var SharedString, c: char|string|cstring|SharedString) =
+  let
+    cStr = $c
   withLock aLock:
-    ss.setSharedStringData($c)
+    ss.setSharedStringData(cStr)
 
 proc len*(ss: SharedString): Natural =
   withLock aLock:
@@ -56,20 +58,23 @@ proc `&`*(ss: SharedString, c: char|string|cstring|SharedString): string =
   $ss & $c
 
 proc `&=`*(ss: var SharedString, c: char|string|cstring|SharedString) =
+  let
+    aStr = $ss & $c
   withLock aLock:
-    ss.setSharedStringData(ss & c)
+    ss.setSharedStringData(aStr)
 
 # Broken on 0.20.0 - https://github.com/nim-lang/Nim/issues/11553
 proc `=`*(ss: var SharedString, sn: SharedString) =
+  let
+    snStr = $sn
   withLock aLock:
     if not ss.ssptr.isNil:
       raise newException(ValueError, "Assignment not allowed, use set()")
     else:
-      ss.setSharedStringData($sn)
+      ss.setSharedStringData(snStr)
 
 proc `[]`*(ss: var SharedString, i: Natural): char =
-  withLock aLock:
-    result = ($ss)[i]
+  result = ($ss)[i]
 
 proc `[]=`*(ss: var SharedString, i: Natural, value: char) =
   withLock aLock:
