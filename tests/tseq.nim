@@ -1,3 +1,5 @@
+import os
+
 import shared/seq
 
 # Seq testing
@@ -19,6 +21,14 @@ proc test() =
   doAssert r == """@["hello", "world"]"""
   doAssert s == """@["hello", "world"]"""
 
+  doAssert p & 5 == "@[1, 2, 3, 5]"
+  p.add(5)
+  doAssert p == "@[1, 2, 3, 5]"
+  p &= 5
+  doAssert p == "@[1, 2, 3, 5, 5]"
+  p &= newSharedSeq(@[1, 2])
+  doAssert p == "@[1, 2, 3, 5, 5, 1, 2]"
+
   # Multi-threaded copying
 
   type
@@ -26,8 +36,8 @@ proc test() =
       ss1: SharedSeq[int]
       ss2: SharedSeq[int]
 
-  proc testThread3(ssObj: ptr SharedSeqStuff) {.thread.} =
-    ssObj[].ss2.set(ssObj.ss1)
+  proc testThread(ssQObj: ptr SharedSeqStuff) {.thread.} =
+    ssQObj[].ss2.set(ssQObj.ss1)
 
     var
       p = newSharedSeq(@["Abc"])
@@ -38,10 +48,46 @@ proc test() =
 
   for i in 0 .. 10:
     ssQObj.ss1.set(@[i])
-    createThread(threadSeq, testThread3, addr ssQObj)
+    createThread(threadSeq, testThread, addr ssQObj)
     threadSeq.joinThread()
 
     doAssert $ssQObj.ss2 == $ssQObj.ss1, "Failed copy: " & $i
+
+  # Readme example
+
+  var
+    sq1 = newSharedSeq(@[1, 2, 3])
+    sq2 = newSharedSeq(@["a", "b", "c"])
+    sq3: SharedSeq[string]
+
+  doAssert $sq1 == $(@[1, 2, 3])
+  doAssert $sq2 == $(@["a", "b", "c"])
+  sq2.set(@["d", "e", "f"])
+  doAssert $sq2 == $(@["d", "e", "f"])
+  sq3 = sq2
+  doAssert $sq3 == $(@["d", "e", "f"])
+
+  # Multi-threaded parallel modify
+
+  proc testThread2(ssQObj: ptr SharedSeqStuff) {.thread.} =
+    sleep(10)
+    ssQObj.ss1 &= getThreadId()
+    sleep(10)
+    ssQObj.ss2.add(newSharedSeq(@[getThreadId()]))
+
+  var
+    threads: array[11, Thread[ptr SharedSeqStuff]]
+
+  ssQObj.ss1.free()
+  ssQObj.ss2.free()
+
+  for i in 0 .. 10:
+    createThread(threads[i], testThread2, addr ssQObj)
+
+  threads.joinThreads()
+
+  doAssert ssQObj.ss1.len == 11
+  doAssert ssQObj.ss2.len == 11
 
 when isMainModule:
   test()

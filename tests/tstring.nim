@@ -90,8 +90,7 @@ proc test() =
   for i in 0 .. 10:
     createThread(threads[i], testThread2, addr ssObj)
 
-  for thr in threads:
-    thr.joinThread()
+  threads.joinThreads()
 
   doAssert ssObj.ss1.len > 10
 

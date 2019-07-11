@@ -26,7 +26,7 @@ proc newSharedString*(s: cstring): SharedString =
     result.newShared()
     result.setSharedStringData(s)
 
-proc `=destroy`*(ss: var SharedString) =
+proc `=destroy`(ss: var SharedString) =
   withLock aLock:
     ss.freeShared()
 
