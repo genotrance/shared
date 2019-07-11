@@ -28,6 +28,19 @@ proc test() =
   doAssert p == "@[1, 2, 3, 5, 5]"
   p &= newSharedSeq(@[1, 2])
   doAssert p == "@[1, 2, 3, 5, 5, 1, 2]"
+  p.delete(1)
+  p.delete(5)
+  doAssert p == "@[1, 3, 5, 5, 1]"
+  p.insert(2, 2)
+  doAssert p == "@[1, 3, 2, 5, 5, 1]"
+  doAssert 1 & p == "@[1, 1, 3, 2, 5, 5, 1]"
+  doAssert p == p
+  doAssert q == @[1.1, 1.2, 1.3, 1.4]
+  doAssert q.pop() == 1.4
+  doAssert q == @[1.1, 1.2, 1.3]
+  doAssert q[1] == 1.2
+  q[1] = 1.0
+  doAssert q == @[1.1, 1.0, 1.3]
 
   # Multi-threaded copying
 

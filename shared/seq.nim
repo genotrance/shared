@@ -82,19 +82,44 @@ proc len*[T](ss: SharedSeq[T]): Natural =
     if not ss.ssptr.isNil:
       result = ss.ssptr.len
 
-proc add*[T](c: var seq[T], ss: SharedSeq[T]) =
-  withLock aLock:
-    c.add(ss.toSeqImpl())
-
-proc add*[T](ss: var SharedSeq[T], c: T|SharedSeq[T]) =
+template withSharedSeq*(ss, body: untyped) {.dirty.} =
   withLock aLock:
     var
       ssSeq = ss.toSeqImpl()
+    body
+
+template setSharedSeq*(ss, body: untyped) {.dirty.} =
+  withLock aLock:
+    var
+      ssSeq = ss.toSeqImpl()
+    body
+    ss.setSharedSeqData(ssSeq)
+
+proc add*[T](c: var seq[T], ss: SharedSeq[T]) =
+  withSharedSeq(ss):
+    c.add(ssSeq)
+
+proc add*[T](ss: var SharedSeq[T], c: T|SharedSeq[T]) =
+  setSharedSeq(ss):
     when c is T:
       ssSeq.add(c)
     else:
       ssSeq.add(c.toSeqImpl())
-    ss.setSharedSeqData(ssSeq)
+
+proc delete*[T](ss: var SharedSeq[T], i: Natural) =
+  setSharedSeq(ss):
+    ssSeq.delete(i)
+
+proc del*[T](ss: var SharedSeq[T], i: Natural) =
+  ss.delete(i)
+
+proc insert*[T](ss: var SharedSeq[T], item: T, i = 0.Natural) =
+  setSharedSeq(ss):
+    ssSeq.insert(item, i)
+
+proc pop*[T](ss: var SharedSeq[T]): T =
+  setSharedSeq(ss):
+    result = ssSeq.pop()
 
 proc `$`*[T](ss: SharedSeq[T]): string =
   result = $ss.toSeq()
@@ -103,6 +128,12 @@ proc `&`*[T](ss: SharedSeq[T], c: T|SharedSeq[T]): SharedSeq[T] =
   var
     ssSeq = ss.toSeq()
   ssSeq.add c
+  result = newSharedSeq(ssSeq)
+
+proc `&`*[T](c: T, ss: SharedSeq[T]): SharedSeq[T] =
+  var
+    ssSeq = ss.toSeq()
+  ssSeq.insert(c, 0)
   result = newSharedSeq(ssSeq)
 
 proc `&=`*[T](ss: var SharedSeq[T], c: T|SharedSeq[T]) =
@@ -118,5 +149,24 @@ proc `=`*[T](ss: var SharedSeq[T], sn: SharedSeq[T]) =
     else:
       ss.setSharedSeqData(snSeq)
 
-proc `==`*[T](ss: SharedSeq[T]; c: char|string|cstring|SharedString): bool =
+proc `[]`*[T](ss: var SharedSeq[T], i: Natural): T =
+  withSharedSeq(ss):
+    result = ssSeq[i]
+
+proc `[]=`*[T](ss: var SharedSeq[T], i: Natural, value: T) =
+  setSharedSeq(ss):
+    ssSeq[i] = value
+
+proc `==`*[T](ss: SharedSeq[T], c: string|cstring|SharedString): bool =
   result = $ss == $c
+
+proc `==`*[T](ss: SharedSeq[T], c: (seq[T]|SharedSeq[T])): bool =
+  withLock aLock:
+    let
+      ssSeq = ss.toSeqImpl()
+    when c is SharedSeq[T]:
+      let
+        cSeq = c.toSeqImpl()
+      result = ssSeq == cSeq
+    else:
+      result = ssSeq == c

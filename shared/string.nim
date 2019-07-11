@@ -38,10 +38,14 @@ proc free*(ss: var SharedString) =
   withLock aLock:
     ss.freeShared()
 
+proc toStringImpl(ss: SharedString): string =
+  if not ss.ssptr.isNil:
+    result = $(cast[cstring](ss.ssptr.sptr))
+
 proc set*(ss: var SharedString, c: char|string|cstring|SharedString) =
-  let
-    cStr = $c
   withLock aLock:
+    let
+      cStr = when c is SharedString: c.toStringImpl() else: $c
     ss.setSharedStringData(cStr)
 
 proc len*(ss: SharedString): Natural =
@@ -51,40 +55,40 @@ proc len*(ss: SharedString): Natural =
 
 proc `$`*(ss: SharedString): string =
   withLock aLock:
-    if not ss.ssptr.isNil:
-      result = $(cast[cstring](ss.ssptr.sptr))
+    result = ss.toStringImpl()
 
 proc `&`*(ss: SharedString, c: char|string|cstring|SharedString): string =
-  $ss & $c
+  withLock aLock:
+    let
+      cStr = when c is SharedString: c.toStringImpl() else: $c
+    result = ss.toStringImpl() & cStr
 
 proc `&=`*(ss: var SharedString, c: char|string|cstring|SharedString) =
-  let
-    aStr = $ss & $c
   withLock aLock:
-    ss.setSharedStringData(aStr)
+    let
+      cStr = when c is SharedString: c.toStringImpl() else: $c
+    ss.setSharedStringData(ss.toStringImpl() & cStr)
 
 # Broken on 0.20.0 - https://github.com/nim-lang/Nim/issues/11553
 proc `=`*(ss: var SharedString, sn: SharedString) =
-  let
-    snStr = $sn
   withLock aLock:
     if not ss.ssptr.isNil:
       raise newException(ValueError, "Assignment not allowed, use set()")
     else:
-      ss.setSharedStringData(snStr)
+      ss.setSharedStringData(sn.toStringImpl())
 
 proc `[]`*(ss: var SharedString, i: Natural): char =
   result = ($ss)[i]
 
 proc `[]=`*(ss: var SharedString, i: Natural, value: char) =
   withLock aLock:
-    if ss.ssptr.isNil or ss.ssptr.sptr.isNil or ss.ssptr.len == 0:
-      raise newException(IndexError, "SharedString not initialized")
-    elif ss.ssptr.len <= i:
-      raise newException(IndexError, "Index out of bounds")
     var
-      s = cast[cstring](ss.ssptr.sptr)
-    s[i] = value
+      ssStr = ss.toStringImpl()
+    ssStr[i] = value
+    ss.setSharedStringData(ssStr)
 
-proc `==`*(ss: SharedString; c: char|string|cstring|SharedString): bool =
-  result = $ss == $c
+proc `==`*(ss: SharedString, c: char|string|cstring|SharedString): bool =
+  withLock aLock:
+    let
+      cStr = when c is SharedString: c.toStringImpl() else: $c
+    result = ss.toStringImpl() == cStr
