@@ -83,13 +83,17 @@ proc len*[T](ss: SharedSeq[T]): Natural =
       result = ss.ssptr.len
 
 proc add*[T](c: var seq[T], ss: SharedSeq[T]) =
-  c.add(ss.toSeq())
+  withLock aLock:
+    c.add(ss.toSeqImpl())
 
 proc add*[T](ss: var SharedSeq[T], c: T|SharedSeq[T]) =
   withLock aLock:
     var
       ssSeq = ss.toSeqImpl()
-    ssSeq.add(c)
+    when c is T:
+      ssSeq.add(c)
+    else:
+      ssSeq.add(c.toSeqImpl())
     ss.setSharedSeqData(ssSeq)
 
 proc `$`*[T](ss: SharedSeq[T]): string =
