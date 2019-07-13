@@ -23,10 +23,17 @@ proc setSharedStringData(ss: var SharedString, s: cstring) =
     for i in 0 .. s.len:
       ssc[i] = s[i]
 
-proc newSharedString*(s: cstring): SharedString =
+proc toStringImpl(ss: SharedString): string =
+  if not ss.ssptr.isNil:
+    result = $(cast[cstring](ss.ssptr.sptr))
+
+proc newSharedString*(c: char|cstring|string|SharedString): SharedString =
   withLock aLock:
     result.ssptr = newShared()
-    result.setSharedStringData(s)
+    when c is SharedString:
+      result.setSharedStringData(c.toStringImpl())
+    else:
+      result.setSharedStringData($c)
 
 proc `=destroy`(ss: var SharedString) =
   withLock aLock:
@@ -41,10 +48,6 @@ proc free*(ss: var SharedString) =
   withLock aLock:
     ss.ssptr.freeShared()
     ss.ssptr = nil
-
-proc toStringImpl(ss: SharedString): string =
-  if not ss.ssptr.isNil:
-    result = $(cast[cstring](ss.ssptr.sptr))
 
 proc set*(ss: var SharedString, c: char|string|cstring|SharedString) =
   withLock aLock:

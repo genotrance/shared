@@ -41,6 +41,17 @@ proc test() =
   doAssert q[1] == 1.2
   q[1] = 1.0
   doAssert q == @[1.1, 1.0, 1.3]
+  q.add @[1.4, 1.5]
+  doAssert q == @[1.1, 1.0, 1.3, 1.4, 1.5]
+
+  var
+    t = newSharedSeq(q)
+
+  doAssert t == q
+  q.set(t)
+  doAssert t == q
+  t.add(q)
+  doAssert t.len() == q.len() * 2
 
   # Multi-threaded copying
 

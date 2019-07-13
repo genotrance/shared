@@ -10,6 +10,8 @@ proc test() =
     b = newSharedString("abc")
     c = newSharedString("def".cstring)
     d: SharedString
+    e = newSharedString('c')
+    f = newSharedString(b)
 
   doAssert a == ""
   doAssert $b == "abc"
@@ -93,6 +95,19 @@ proc test() =
   threads.joinThreads()
 
   doAssert ssObj.ss1.len > 10
+
+  # Direct share
+
+  proc testThread3(ss: ptr SharedString) {.thread.} =
+    ss[].set("bye")
+
+  var
+    ss = newSharedString("hello")
+    thread3: Thread[ptr SharedString]
+
+  createThread(thread3, testThread3, addr ss)
+  thread3.joinThread()
+  doAssert ss == "bye"
 
 when isMainModule:
   test()
