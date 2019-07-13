@@ -16,6 +16,8 @@ This will download and install shared in the standard Nimble package location, t
 
 __Usage__
 
+Detailed documentation [here](https://genotrance.github.io/shared/theindex.html).
+
 ```nim
 import shared/string
 
