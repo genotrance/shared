@@ -1,0 +1,14 @@
+SharedString	string.html#SharedString	string: SharedString	
+newSharedString	string.html#newSharedString,	string: newSharedString(): SharedString	
+newSharedString	string.html#newSharedString,_2	string: newSharedString(c: char | cstring | string | SharedString): SharedString	
+clear	string.html#clear,SharedString	string: clear(ss: var SharedString)	
+free	string.html#free,SharedString	string: free(ss: var SharedString)	
+set	string.html#set,SharedString,	string: set(ss: var SharedString; c: char | string | cstring | SharedString)	
+len	string.html#len,SharedString	string: len(ss: SharedString): Natural	
+`$`	string.html#$,SharedString	string: `$`(ss: SharedString): string	
+`&amp;`	string.html#&,SharedString,	string: `&amp;`(ss: SharedString; c: char | string | cstring | SharedString): string	
+`&amp;=`	string.html#&=,SharedString,	string: `&amp;=`(ss: var SharedString; c: char | string | cstring | SharedString)	
+`=`	string.html#=,SharedString,SharedString	string: `=`(ss: var SharedString; sn: SharedString)	
+`[]`	string.html#[],SharedString,Natural	string: `[]`(ss: var SharedString; i: Natural): char	
+`[]=`	string.html#[]=,SharedString,Natural,char	string: `[]=`(ss: var SharedString; i: Natural; value: char)	
+`==`	string.html#==,SharedString,	string: `==`(ss: SharedString; c: char | string | cstring | SharedString): bool	
