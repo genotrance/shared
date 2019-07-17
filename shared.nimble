@@ -11,15 +11,16 @@ import strformat
 
 const htmldocsDir = "build/htmldocs"
 
+when (NimMajor, NimMinor, NimPatch) >= (0, 19, 9):
+  import os
+  proc getNimRootDir(): string =
+    fmt"{currentSourcePath}".parentDir.parentDir.parentDir
+
 proc runNimDoc() =
   exec &"nim doc --path:. -o:{htmldocsDir} --project --index:on shared/seq.nim"
   exec &"nim doc --path:. -o:{htmldocsDir} --project --index:on shared/string.nim"
   exec &"nim buildIndex -o:{htmldocsDir}/theindex.html {htmldocsDir}"
   when declared(getNimRootDir):
-    #[
-    this enables doc search, works at least locally with:
-    cd {htmldocsDir} && python -m SimpleHTTPServer 9009
-    ]#
     exec &"nim js -o:{htmldocsDir}/dochack.js {getNimRootDir()}/tools/dochack/dochack.nim"
 
 task docs, "Generate docs":
