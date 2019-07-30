@@ -17,7 +17,7 @@ template eType(T: untyped) =
     var eType {.inject.}: pointer
   else:
     var eType {.inject.}: void
-  doAssert eType isnot void, "Unsupported SharedSeq data type '" & $T & "'"
+  doAssert eType isnot void, "Unsupported SharedSeq data type"
 
 proc newSharedSeq*[T](): SharedSeq[T] =
   ## Create a new SharedSeq of type `T`
