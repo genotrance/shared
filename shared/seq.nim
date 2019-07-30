@@ -10,6 +10,15 @@ type
 
 # Seq specific
 
+template eType(T: untyped) =
+  when T is bool or T is char or T is SomeNumber:
+    var eType {.inject.}: T
+  elif T is cstring or T is system.string:
+    var eType {.inject.}: pointer
+  else:
+    var eType {.inject.}: void
+  doAssert eType isnot void, "Unsupported SharedSeq data type '" & $T & "'"
+
 proc newSharedSeq*[T](): SharedSeq[T] =
   ## Create a new SharedSeq of type `T`
   ##
@@ -40,37 +49,70 @@ proc newSharedSeq*[T](): SharedSeq[T] =
 proc freeSharedSeqData[T](ss: var SharedSeq[T]) =
   if (not ss.ssptr.isNil) and (not ss.ssptr.sptr.isNil) and
       (ss.ssptr.len != 0):
-    var
-      sss = cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
+    eType(T)
 
-    for i in 0 .. ss.ssptr.len-1:
-      decSeqDataCount()
-      sss[i].deallocShared()
+    when eType is pointer:
+      var
+        sss = cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
+
+      for i in 0 .. ss.ssptr.len-1:
+        decSeqDataCount()
+        sss[i].deallocShared()
 
 proc setSharedSeqData[T](ss: var SharedSeq[T], s: seq[T]) =
   ss.freeSharedSeqData()
   ss.ssptr = initShared(ss.ssptr)
 
   if s.len != 0:
-    ss.ssptr.initSharedData(s.len, sizeof(pointer))
+    eType(T)
+
+    ss.ssptr.size =
+      when eType is T:
+        sizeof(T)
+      else:
+        sizeof(pointer)
+
+    ss.ssptr.initSharedData(s.len, ss.ssptr.size)
 
     var
-      sss = cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
-    ss.ssptr.size = sizeof(T)
+      sss =
+        when eType is T:
+          cast[ptr UncheckedArray[T]](ss.ssptr.sptr)
+        else:
+          cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
 
     for i in 0 .. s.len-1:
-      incSeqDataCount()
-      sss[i] = allocShared0(sizeof(T))
-      copyMem(sss[i], cast[pointer](unsafeAddr s[i]), sizeof(T))
+      when eType is T:
+        deepCopy(sss[i], s[i])
+      else:
+        incSeqDataCount()
+
+        sss[i] = allocShared0(s[i].len()+1)
+
+        var
+          ssss = cast[ptr cstring](sss[i])
+        for j in 0 .. s[i].len-1:
+          deepCopy(ssss[], s[i].cstring)
 
 proc toSeqImpl[T](ss: SharedSeq[T]): seq[T] =
   if (not ss.ssptr.isNil) and (not ss.ssptr.sptr.isNil) and
       (ss.ssptr.len != 0):
+    eType(T)
+
     var
-      sss = cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
+      sss =
+        when eType is T:
+          cast[ptr UncheckedArray[T]](ss.ssptr.sptr)
+        else:
+          cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
 
     for i in 0 .. ss.ssptr.len-1:
-      result.add cast[ptr T](sss[i])[]
+      when eType is T:
+        result.add sss[i]
+      elif T is cstring:
+        result.add cast[ptr cstring](sss[i])[]
+      elif T is system.string:
+        result.add $cast[ptr cstring](sss[i])[]
 
 proc newSharedSeq*[T](s: seq[T]|SharedSeq[T]): SharedSeq[T] =
   ## Create a new SharedSeq of type `T` and populate with the elements
