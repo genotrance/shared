@@ -1,13 +1,13 @@
 SharedObj	private/common.html#SharedObj	common: SharedObj	
 aLock	private/common.html#aLock	common: aLock	
-incCount	private/common.html#incCount,	common: incCount()	
-incDataCount	private/common.html#incDataCount,	common: incDataCount()	
-incSeqDataCount	private/common.html#incSeqDataCount,	common: incSeqDataCount()	
-decCount	private/common.html#decCount,	common: decCount()	
-decDataCount	private/common.html#decDataCount,	common: decDataCount()	
-decSeqDataCount	private/common.html#decSeqDataCount,	common: decSeqDataCount()	
+incCount	private/common.html#incCount	common: incCount()	
+incDataCount	private/common.html#incDataCount	common: incDataCount()	
+incSeqDataCount	private/common.html#incSeqDataCount	common: incSeqDataCount()	
+decCount	private/common.html#decCount	common: decCount()	
+decDataCount	private/common.html#decDataCount	common: decDataCount()	
+decSeqDataCount	private/common.html#decSeqDataCount	common: decSeqDataCount()	
 freeSharedData	private/common.html#freeSharedData,ptr.SharedObj	common: freeSharedData(ssptr: ptr SharedObj)	
 freeShared	private/common.html#freeShared,ptr.SharedObj	common: freeShared(ssptr: ptr SharedObj)	
-newShared	private/common.html#newShared,	common: newShared(): ptr SharedObj	
+newShared	private/common.html#newShared	common: newShared(): ptr SharedObj	
 initShared	private/common.html#initShared,ptr.SharedObj	common: initShared(ssptr: ptr SharedObj): ptr SharedObj	
 initSharedData	private/common.html#initSharedData,ptr.SharedObj,Natural,Natural	common: initSharedData(ssptr: ptr SharedObj; len, size: Natural)	

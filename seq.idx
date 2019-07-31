@@ -1,17 +1,19 @@
 SharedSeq	seq.html#SharedSeq	seq: SharedSeq	
-newSharedSeq	seq.html#newSharedSeq,	seq: newSharedSeq[T](): SharedSeq[T]	
-newSharedSeq	seq.html#newSharedSeq,_2	seq: newSharedSeq[T](s: seq[T] | SharedSeq[T]): SharedSeq[T]	
+newSharedSeq	seq.html#newSharedSeq	seq: newSharedSeq[T](): SharedSeq[T]	
+newSharedSeq	seq.html#newSharedSeq_2	seq: newSharedSeq[T](s: seq[T] | SharedSeq[T]): SharedSeq[T]	
 clear	seq.html#clear,SharedSeq[T]	seq: clear[T](ss: var SharedSeq[T])	
 free	seq.html#free,SharedSeq[T]	seq: free[T](ss: var SharedSeq[T])	
-toSeq	seq.html#toSeq,SharedSeq[T]	seq: toSeq[T](ss: SharedSeq[T]): seq[T]	
+toSequence	seq.html#toSequence,SharedSeq[T]	seq: toSequence[T](ss: SharedSeq[T]): seq[T]	
 set	seq.html#set,SharedSeq[T],	seq: set[T](ss: var SharedSeq[T]; c: seq[T] | SharedSeq[T])	
 len	seq.html#len,SharedSeq[T]	seq: len[T](ss: SharedSeq[T]): Natural	
-add	seq.html#add,seq[T],SharedSeq[T]	seq: add[T](c: var seq[T]; ss: SharedSeq[T])	
+add	seq.html#add,seq[T][T],SharedSeq[T]	seq: add[T](c: var seq[T]; ss: SharedSeq[T])	
 add	seq.html#add,SharedSeq[T],	seq: add[T](ss: var SharedSeq[T]; c: T | seq[T] | SharedSeq[T])	
 delete	seq.html#delete,SharedSeq[T],Natural	seq: delete[T](ss: var SharedSeq[T]; i: Natural)	
 del	seq.html#del,SharedSeq[T],Natural	seq: del[T](ss: var SharedSeq[T]; i: Natural)	
+remove	seq.html#remove,SharedSeq[T],T	seq: remove[T](ss: var SharedSeq[T]; s: T)	
 insert	seq.html#insert,SharedSeq[T],T	seq: insert[T](ss: var SharedSeq[T]; item: T; i = 0.Natural)	
 pop	seq.html#pop,SharedSeq[T]	seq: pop[T](ss: var SharedSeq[T]): T	
+contains	seq.html#contains,SharedSeq[T],T	seq: contains[T](ss: SharedSeq[T]; s: T): bool	
 `$`	seq.html#$,SharedSeq[T]	seq: `$`[T](ss: SharedSeq[T]): string	
 `&amp;`	seq.html#&,SharedSeq[T],	seq: `&amp;`[T](ss: SharedSeq[T]; c: T | seq[T] | SharedSeq[T]): SharedSeq[T]	
 `&amp;`	seq.html#&,,SharedSeq[T]	seq: `&amp;`[T](c: T | seq[T]; ss: SharedSeq[T]): SharedSeq[T]	

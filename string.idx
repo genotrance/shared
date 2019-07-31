@@ -1,6 +1,6 @@
 SharedString	string.html#SharedString	string: SharedString	
-newSharedString	string.html#newSharedString,	string: newSharedString(): SharedString	
-newSharedString	string.html#newSharedString,_2	string: newSharedString(c: char | cstring | string | SharedString): SharedString	
+newSharedString	string.html#newSharedString	string: newSharedString(): SharedString	
+newSharedString	string.html#newSharedString_2	string: newSharedString(c: char | cstring | string | SharedString): SharedString	
 clear	string.html#clear,SharedString	string: clear(ss: var SharedString)	
 free	string.html#free,SharedString	string: free(ss: var SharedString)	
 set	string.html#set,SharedString,	string: set(ss: var SharedString; c: char | string | cstring | SharedString)	
