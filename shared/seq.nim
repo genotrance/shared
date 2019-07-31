@@ -56,8 +56,9 @@ proc freeSharedSeqData[T](ss: var SharedSeq[T]) =
         sss = cast[ptr UncheckedArray[pointer]](ss.ssptr.sptr)
 
       for i in 0 .. ss.ssptr.len-1:
-        decSeqDataCount()
-        sss[i].deallocShared()
+        if not sss[i].isNil:
+          decSeqDataCount()
+          sss[i].deallocShared()
 
 proc setSharedSeqData[T](ss: var SharedSeq[T], s: seq[T]) =
   ss.freeSharedSeqData()
@@ -85,14 +86,12 @@ proc setSharedSeqData[T](ss: var SharedSeq[T], s: seq[T]) =
       when eType is T:
         deepCopy(sss[i], s[i])
       else:
-        incSeqDataCount()
+        if s[i].len != 0:
+          incSeqDataCount()
 
-        sss[i] = allocShared0(s[i].len()+1)
+          sss[i] = allocShared0(s[i].len()+1)
 
-        var
-          ssss = cast[ptr cstring](sss[i])
-        for j in 0 .. s[i].len-1:
-          deepCopy(ssss[], s[i].cstring)
+          copyMem(sss[i], s[i].cstring, s[i].len)
 
 proc toSeqImpl[T](ss: SharedSeq[T]): seq[T] =
   if (not ss.ssptr.isNil) and (not ss.ssptr.sptr.isNil) and
@@ -109,10 +108,17 @@ proc toSeqImpl[T](ss: SharedSeq[T]): seq[T] =
     for i in 0 .. ss.ssptr.len-1:
       when eType is T:
         result.add sss[i]
-      elif T is cstring:
-        result.add cast[ptr cstring](sss[i])[]
-      elif T is system.string:
-        result.add $cast[ptr cstring](sss[i])[]
+      else:
+        var val: cstring = ""
+        if not sss[i].isNil:
+          let
+            ssss = cast[cstring](sss[i])
+          if not ssss.isNil:
+            val = ssss
+        when T is cstring:
+          result.add val
+        else:
+          result.add $val
 
 proc newSharedSeq*[T](s: seq[T]|SharedSeq[T]): SharedSeq[T] =
   ## Create a new SharedSeq of type `T` and populate with the elements
@@ -150,7 +156,7 @@ proc free*[T](ss: var SharedSeq[T]) =
   ## the SharedSeq goes out of scope.
   ss.`=destroy`()
 
-proc toSeq*[T](ss: SharedSeq[T]): seq[T] =
+proc toSequence*[T](ss: SharedSeq[T]): seq[T] =
   ## Convert a SharedSeq into an stdlib seq
   ##
   ## Resulting seq is a thread local copy
@@ -211,6 +217,14 @@ proc del*[T](ss: var SharedSeq[T], i: Natural) =
   ## This is *not* an optimized version like in the stdlib.
   ss.delete(i)
 
+proc remove*[T](ss: var SharedSeq[T], s: T) =
+  ## Remove the first matching element from the SharedSeq
+  withSharedSeq(ss):
+    let
+      i = ssSeq.find(s)
+    if i != -1:
+      ssSeq.delete(i)
+
 proc insert*[T](ss: var SharedSeq[T], item: T, i = 0.Natural) =
   ## Insert element in the i'th position in the SharedSeq
   setSharedSeq(ss):
@@ -221,9 +235,14 @@ proc pop*[T](ss: var SharedSeq[T]): T =
   setSharedSeq(ss):
     result = ssSeq.pop()
 
+proc contains*[T](ss: SharedSeq[T], s: T): bool =
+  ## Search sequence and find element
+  withSharedSeq(ss):
+    result = ssSeq.contains(s)
+
 proc `$`*[T](ss: SharedSeq[T]): string =
   ## Convert the SharedSeq into its string representation
-  result = $ss.toSeq()
+  result = $ss.toSequence()
 
 proc `&`*[T](ss: SharedSeq[T], c: T|seq[T]|SharedSeq[T]): SharedSeq[T] =
   ## Append SharedSeq with element or elements of seq or SharedSeq and
